@@ -18,6 +18,10 @@
  *  $('textarea#description').form_prompt('Type your message here', {
  *    className: 'form-prompt-class'
  *  });
+ *  
+ * Or, use without options and put a placeholder attribute on element
+ *
+ *  $("input[type=text], textarea").form_prompt();
  *
  * Copyright (c) Henry Poydar (henry@poydar.com)
  * Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
@@ -33,15 +37,20 @@
 	$.fn.form_prompt = form_prompt;
 
 	function form_prompt(text, options) {
-
+		var use_placeholder = false;
 		var prompt_text = '';
 		options = options || {};
-
-		// If text is passed as a callback, evaluate it
-		if ($.isFunction(text)) {
-			prompt_text = text.call(this);
+		
+		// If no options are set, use tag's placeholder attribute
+		if(text) {
+			// If text is passed as a callback, evaluate it
+			if ($.isFunction(text)) {
+				prompt_text = text.call(this);
+			} else {
+				prompt_text = text;
+			}
 		} else {
-			prompt_text = text;
+			use_placeholder = true;
 		}
 
 		// Evaluate options
@@ -50,48 +59,51 @@
 
 		return this.each(function() {
 
-		var input = $(this);
-		var wrapper = $('<div style="position:relative;overflow:hidden;display:inline-block;" />');
+			var input = $(this);
+			var wrapper = $('<div style="position:relative;overflow:hidden;display:inline-block;" />');
 
-		// Use native placeholder attribute in Safari
-		if ($.browser.safari) {
-			input.attr('placeholder', prompt_text);
-			return;
-		}
+			if(use_placeholder)
+				prompt_text = input.attr('placeholder');
+			
+			// Use empty placeholder attribute in Safari
+			if ($.browser.safari) {
+				input.attr('placeholder', '');
+			}
 
-		// This may need adjustment for MSIE ...
-		var priorClasses = wrapper.attr('class');
-		input.wrap(wrapper.addClass(wrapperClassName));
-		wrapper.attr('class', priorClasses);
+			// This may need adjustment for MSIE ...
+			var priorClasses = wrapper.attr('class');
+			input.wrap(wrapper.addClass(wrapperClassName));
+			wrapper.attr('class', priorClasses);
 
-		if (input.val() == '') {
-			input.after("<div class='" + className + "'>" + prompt_text + "</div>");
-		} else {
-			input.after("<div class='" + className + "'></div>");
-		}
+			if (input.val() == '') {
+				input.after("<div class='" + className + "'>" + prompt_text + "</div>");
+			} else {
+				input.after("<div class='" + className + "'></div>");
+			}
 
-		var wrapper = input.parent('.' + wrapperClassName);
-		var prompt = wrapper.find('.' + className);
+			var wrapper = input.parent('.' + wrapperClassName);
+			var prompt = wrapper.find('.' + className);
 
-		prompt.css("position", "absolute");
-		prompt.css("top", "0");
-		prompt.css("left", "0");
-		prompt.css("z-index", "1000");
+			prompt.css("position", "absolute");
+			prompt.css("top", "0");
+			prompt.css("left", "0");
+			prompt.css("z-index", "1000");
 
-		var selectInput = function() {
-			input.focus();
-			prompt.hide();
-		}
+			var selectInput = function() {
+				input.focus();
+				prompt.hide();
+			}
 
-		input.click(selectInput);   // Form field is clicked
-		input.keyup(selectInput);   // Form field is tabbed into
-		prompt.click(selectInput);  // Prompt element is clicked
+			input.click(selectInput);   // Form field is clicked
+			input.keyup(selectInput);   // Form field is tabbed into
+			prompt.click(selectInput);  // Prompt element is clicked
 
-		input.blur(function() {
-			if (input.val() == '') { prompt.show(); }
+			input.blur(function() {
+				if (input.val() == '') { prompt.show(); }
+			});
+
 		});
-
-		});
+		
 	};
 
 })(jQuery);
